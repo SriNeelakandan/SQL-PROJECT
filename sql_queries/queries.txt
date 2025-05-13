@@ -1,0 +1,143 @@
+create database student_performance;
+USE student_performance;
+
+-- Students table
+CREATE TABLE students (
+    student_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    class VARCHAR(10),
+    section VARCHAR(5)
+);
+
+-- Subjects table
+CREATE TABLE subjects (
+    subject_id INT PRIMARY KEY,
+    subject_name VARCHAR(50)
+);
+
+-- Marks table
+CREATE TABLE marks (
+    student_id INT,
+    subject_id INT,
+    marks INT,
+    FOREIGN KEY (student_id) REFERENCES students(student_id),
+    FOREIGN KEY (subject_id) REFERENCES subjects(subject_id)
+);
+
+-- Attendance table
+CREATE TABLE attendance (
+    student_id INT,
+    date DATE,
+    present BOOLEAN,
+    FOREIGN KEY (student_id) REFERENCES students(student_id)
+);
+-- Insert data 
+-- Students
+INSERT INTO students VALUES
+(1, 'Alice', '10', 'A'),
+(2, 'Bob', '10', 'A'),
+(3, 'Charlie', '10', 'B'),
+(4, 'David', '10', 'B'),
+(5, 'Eva', '10', 'C'),
+(6, 'Frank', '10', 'C'),
+(7, 'Grace', '10', 'A'),
+(8, 'Helen', '10', 'B'),
+(9, 'Ian', '10', 'C'),
+(10, 'Judy', '10', 'A');
+
+-- Subjects
+INSERT INTO subjects VALUES
+(101, 'Math'),
+(102, 'Science'),
+(103, 'English');
+
+-- Marks
+INSERT INTO marks VALUES
+(1, 101, 88), (1, 102, 76), (1, 103, 90),
+(2, 101, 70), (2, 102, 85), (2, 103, 78),
+(3, 101, 60), (3, 102, 55), (3, 103, 65),
+(4, 101, 92), (4, 102, 89), (4, 103, 95),
+(5, 101, 45), (5, 102, 50), (5, 103, 52),
+(6, 101, 80), (6, 102, 72), (6, 103, 75),
+(7, 101, 66), (7, 102, 70), (7, 103, 68),
+(8, 101, 78), (8, 102, 82), (8, 103, 85),
+(9, 101, 55), (9, 102, 60), (9, 103, 58),
+(10, 101, 90), (10, 102, 88), (10, 103, 85);
+
+-- Attendance (3 days sample per student)
+INSERT INTO attendance VALUES
+(1, '2025-05-01', TRUE), (1, '2025-05-02', TRUE), (1, '2025-05-03', TRUE),
+(2, '2025-05-01', TRUE), (2, '2025-05-02', FALSE), (2, '2025-05-03', TRUE),
+(3, '2025-05-01', FALSE), (3, '2025-05-02', FALSE), (3, '2025-05-03', TRUE),
+(4, '2025-05-01', TRUE), (4, '2025-05-02', TRUE), (4, '2025-05-03', TRUE),
+(5, '2025-05-01', FALSE), (5, '2025-05-02', FALSE), (5, '2025-05-03', FALSE),
+(6, '2025-05-01', TRUE), (6, '2025-05-02', TRUE), (6, '2025-05-03', TRUE),
+(7, '2025-05-01', TRUE), (7, '2025-05-02', TRUE), (7, '2025-05-03', FALSE),
+(8, '2025-05-01', TRUE), (8, '2025-05-02', TRUE), (8, '2025-05-03', TRUE),
+(9, '2025-05-01', TRUE), (9, '2025-05-02', FALSE), (9, '2025-05-03', TRUE),
+(10, '2025-05-01', TRUE), (10, '2025-05-02', TRUE), (10, '2025-05-03', TRUE);
+
+select * from students;
+
+select * from subjects;
+
+select * from marks;
+
+select * from attendance;
+
+
+-- 1. Average marks per subject
+SELECT subject_id, AVG(marks) AS avg_marks FROM marks GROUP BY subject_id;
+
+-- 2. Top 3 performers in Math
+SELECT s.name, m.marks FROM marks m
+JOIN students s ON m.student_id = s.student_id
+WHERE m.subject_id = 101
+ORDER BY m.marks DESC
+LIMIT 3;
+
+-- 3. Subject-wise highest mark
+SELECT subject_id, MAX(marks) AS max_marks FROM marks GROUP BY subject_id;
+
+-- 4. Students with any mark < 50 (low performers)
+SELECT DISTINCT s.name FROM marks m
+JOIN students s ON m.student_id = s.student_id
+WHERE m.marks < 50;
+
+-- 5. Attendance percentage of each student
+SELECT a.student_id, 
+       ROUND(SUM(CASE WHEN present = TRUE THEN 1 ELSE 0 END)*100.0/COUNT(*), 2) AS attendance_pct
+FROM attendance a
+GROUP BY a.student_id;
+
+-- 6. Students with attendance < 75%
+SELECT s.name, ROUND(SUM(CASE WHEN present = TRUE THEN 1 ELSE 0 END)*100.0/COUNT(*), 2) AS attendance_pct
+FROM attendance a
+JOIN students s ON s.student_id = a.student_id
+GROUP BY a.student_id
+HAVING attendance_pct < 75;
+
+-- 7. Students with average marks > 80
+SELECT s.name, ROUND(AVG(m.marks), 2) AS avg_marks
+FROM marks m
+JOIN students s ON s.student_id = m.student_id
+GROUP BY m.student_id
+HAVING avg_marks > 80;
+
+-- 8. List of all students with total marks
+SELECT s.name, SUM(m.marks) AS total_marks
+FROM marks m
+JOIN students s ON s.student_id = m.student_id
+GROUP BY s.student_id;
+
+-- 9. Subject-wise average mark with subject names
+SELECT sub.subject_name, ROUND(AVG(m.marks), 2) AS avg_marks
+FROM marks m
+JOIN subjects sub ON m.subject_id = sub.subject_id
+GROUP BY m.subject_id;
+
+-- 10. Students who scored 90 or above in any subject
+SELECT DISTINCT s.name, m.marks
+FROM marks m
+JOIN students s ON s.student_id = m.student_id
+WHERE m.marks >= 90;
